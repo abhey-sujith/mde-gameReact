@@ -15,6 +15,7 @@ import CardMedia from '@material-ui/core/CardMedia';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CardActionArea from '@material-ui/core/CardActionArea';
+import ReactWordcloud from 'react-wordcloud';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -54,9 +55,10 @@ function GameRoom(props) {
     const [Questionno, setQuestionno] = useState(null);
     const [playersChoices, setplayersChoices] = useState([]);
     const [WhatOtherPeopleChoseForPlayer, setWhatOtherPeopleChoseForPlayer] = useState([]);
-
-
-    const [button, setbutton] = useState(false);
+    
+    
+    const [is_show_jahori_button_pressed, setshow_jahori_button_pressed] = useState(false);
+    
     //johariiii
     const [self_others, setself_others] = useState([]);
     const [self_not_others, setself_not_others] = useState([]);
@@ -90,9 +92,9 @@ function GameRoom(props) {
       else{
           
           if(WhatOtherPeopleChoseForPlayer[element]==0){
-              not_self_not_others_.push({text:adjectiveArray[element],count:WhatOtherPeopleChoseForPlayer[element]})
+              not_self_not_others_.push({text:adjectiveArray[element],value:1})
           }else{
-              not_self_but_others_.push({text:adjectiveArray[element],count:WhatOtherPeopleChoseForPlayer[element]})
+              not_self_but_others_.push({text:adjectiveArray[element],value:WhatOtherPeopleChoseForPlayer[element]})
           }
 
       }
@@ -101,23 +103,26 @@ function GameRoom(props) {
 
 
       myselectionindexes.forEach((element)=>{
-    if(WhatOtherPeopleChoseForPlayer[element]>0){
-    self_others_.push({text:adjectiveArray[element],count:WhatOtherPeopleChoseForPlayer[element]})
-    }else{
-    self_not_others_.push({text:adjectiveArray[element],count:WhatOtherPeopleChoseForPlayer[element]})
-    }
-    })
-    
+      if(WhatOtherPeopleChoseForPlayer[element]>0){
+      self_others_.push({text:adjectiveArray[element],value:WhatOtherPeopleChoseForPlayer[element]})
+      }else{
+      self_not_others_.push({text:adjectiveArray[element],value:1})
+      }
+      })
+      
 
-    setself_not_others(self_not_others_)
-    setself_others(self_others_)
-    setnot_self_but_others(not_self_but_others_)
-    setnot_self_not_others(not_self_not_others_)
-    console.log('self_others',self_others_)
-    console.log('self_not_others',self_not_others_)
-    console.log('not_self_but_others',not_self_but_others_)
-    console.log('not_self_not_others',not_self_not_others_)
-    },[button])
+      setself_not_others(self_not_others_)
+      setself_others(self_others_)
+      setnot_self_but_others(not_self_but_others_)
+      setnot_self_not_others(not_self_not_others_)
+      console.log('self_others',self_others_)
+      console.log('self_not_others',self_not_others_)
+      console.log('not_self_but_others',not_self_but_others_)
+      console.log('not_self_not_others',not_self_not_others_)
+      },[is_show_jahori_button_pressed])
+
+
+
     useEffect(()=>{ 
 
       // final endpoint - ws://localhost:2567
@@ -173,16 +178,19 @@ function GameRoom(props) {
 
         }
         
-        // room.state.players.onRemove = function (player, sessionId) {
-        // }
+        room_instance.current.state.players.onRemove = function (player, sessionId) {
+
+          setplayers(prev => {
+            // console.log('setter ,',map);
+            const items = prev.filter(item => item.sessionId !== sessionId);
+            console.log(items);
+            return [...items]
+          });
+        }
 
         //   room_instance.current.onStateChange(function(state) {
-        //     // room_instance.current.state.ready.onChange = function (changes) {
-        //     if(state.ready==='start'){
         //       setReady(state.ready)
-        //       console.log('changes-------------');
-        //     }
-        //   // }
+        // 
         // });
         room_instance.current.onMessage("readychange", (data) => setReady(data.value));
 
@@ -288,6 +296,10 @@ function GameRoom(props) {
       }
     },[])
 
+
+
+
+
     // if reload is pressed the pop up is shown to cancel
     useEffect(() => {
       window.addEventListener("beforeunload", alertUser);
@@ -317,6 +329,9 @@ function GameRoom(props) {
 
     };
 
+
+
+
     // functiion to leave the room
     const leave = () => {
       if (room_instance.current) {
@@ -327,14 +342,31 @@ function GameRoom(props) {
       }
     }
 
+
+
+
     const onPlayerSubmitClicked = () => {
       var result = Object.values(players).filter(obj => obj.selected===true).map(item => {
         return {sessionId:item.sessionId};   
     })
     console.log("click result---",result);
+    setplayers(obj=>{
+      // console.log('obj',obj);
+          return obj.map(item => {
+            var temp = Object.assign({}, item);
+            if (temp.selected === true) {
+                temp.selected = false;
+            }
+            return temp;   
+        })
+      })
+
 
     room_instance.current.send("answer", {value:result});
   }
+
+
+
 
     const showPlayers =()=>{
       return <div>
@@ -371,6 +403,9 @@ function GameRoom(props) {
       </div>
     }
 
+
+
+
     const showPlayersWithoutClick =()=>{
       return <div>  
         {players.length?players.map((data)=>{
@@ -396,8 +431,14 @@ function GameRoom(props) {
 
 
 
+
+
     const onReadyClicked = () => {
-      room_instance.current.send("ready", { value: 'start'});
+      if(players.length>1){
+        room_instance.current.send("ready", { value: 'start'});
+      }else{
+        alert('Please add one more player')
+      }
     }
 
     function GameReadyScreen(props) {
@@ -410,33 +451,79 @@ function GameRoom(props) {
     
     </div>
     }
-    const onshowFinalResult =()=>{
-      // room_instance.current.send("endgame", { value: 'endgame'});
-      setbutton(true)
-    }
+
+
 
     function GameWaitingScreen(props) {
     return <div>
-     <button onClick={onshowFinalResult}>submit</button>
+    {isRoomCreator? <button onClick={()=>setshow_jahori_button_pressed(true)}>submit</button>:null}
     <h2>Waiting for players to finish</h2>
     {showPlayersWithoutClick()}
     </div>
     }
 
+
+
+
+    const callbacks = {
+      // getWordColor: word => word.value > 50 ? "blue" : "red",
+      // onWordClick: console.log,
+      // onWordMouseOver: console.log,
+      // getWordTooltip: word => `${word.text} (${word.value}) [${word.value > 50 ? "good" : "bad"}]`,
+    }
+    const options = {
+      colors: ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"],
+      enableTooltip: true,
+      deterministic: false,
+      fontFamily: "impact",
+      fontSizes: [5, 60],
+      fontStyle: "normal",
+      fontWeight: "normal",
+      padding: 1,
+      rotations: 3,
+      rotationAngles: [0, 0],
+      scale: "sqrt",
+      spiral: "archimedean",
+      transitionDuration: 1000
+    };
+    const size = [600, 400];
+
     function GameResult(props) {
 
       return <div>
-      <h2>show result</h2>
-      {/* <h2>Graph 1</h2>
-      <h3>{self_others}</h3>
-      <h2>Graph 2</h2>
-      <h3>{self_not_others}</h3>
-      <h2>Graph 3</h2>
-      <h3>{not_self_but_others}</h3>
-      <h2>Graph 4</h2>
-      <h3>{not_self_not_others}</h3> */}
+      <h2>Result</h2>
+      <h2>Arena - Known to self and others</h2>
+      <ReactWordcloud
+      callbacks={callbacks}
+      options={options}
+      size={size}
+      words={self_others}
+    />
+     <h2>Blind Spot  -Not known to self but known to others</h2>
+      <ReactWordcloud
+      callbacks={callbacks}
+      options={options}
+      size={size}
+      words={not_self_but_others}
+    />
+     <h2>Facade - Known to self but not known to others</h2>
+      <ReactWordcloud
+      callbacks={callbacks}
+      options={options}
+      size={size}
+      words={self_not_others}
+    />
+     <h2>Arena -Not known to self and others</h2>
+      <ReactWordcloud
+      callbacks={callbacks}
+      options={options}
+      size={size}
+      words={not_self_not_others}
+    />
       </div>
       }
+
+
 
 
       const onPlayerAdjectivesSubmitClicked = () => {
@@ -447,39 +534,63 @@ function GameRoom(props) {
       console.log("click result---",arr);
 
       room_instance.current.send("answerforQ0", {value:arr});
+
+
+
+      setplayers(prev => {
+        // console.log('setter ,',map);
+        const items = prev.filter(item => item.sessionId !== room_instance.current.sessionId);
+        console.log(items);
+        return [...items]
+      });
     }
+
+
   
-      const showAdjectives =()=>{
-        return <div>
-        <button onClick={onPlayerAdjectivesSubmitClicked}>submit</button>
-    
-          {adjective.length?adjective.map((data)=>{
-         return (
-          <Card className={[classes.root,data.selected?classes.color:null,data.state==='done'?classes.green:null]} key={data.adjective} onClick={(e)=>{
-            setadjective(obj=>{
-              // console.log('obj',obj);
-              return obj.map(item => {
-                var temp = Object.assign({}, item);
-                if (temp.adjective === data.adjective) {
-                    temp.selected = !data.selected;
-                }
-                return temp;   
-            })
+    const showAdjectives =()=>{
+      return <div>
+      <button onClick={onPlayerAdjectivesSubmitClicked}>submit</button>
+  
+        {adjective.length?adjective.map((data)=>{
+        return (
+        <Card className={[classes.root,data.selected?classes.color:null,data.state==='done'?classes.green:null]} key={data.adjective} onClick={(e)=>{
+          setadjective(obj=>{
+            // console.log('obj',obj);
+            return obj.map(item => {
+              var temp = Object.assign({}, item);
+              if (temp.adjective === data.adjective) {
+                  temp.selected = !data.selected;
+              }
+              return temp;   
           })
-          }}>
-            <CardActionArea>
-          <div className={classes.details}>
-            <CardContent className={classes.content}>
-              <Typography component="h5" variant="h5">
-                {data.adjective}
-              </Typography>
-            </CardContent>
-          </div>
-          </CardActionArea>
-        </Card>
-          )}):null}
+        })
+        }}>
+          <CardActionArea>
+        <div className={classes.details}>
+          <CardContent className={classes.content}>
+            <Typography component="h5" variant="h5">
+              {data.adjective}
+            </Typography>
+          </CardContent>
         </div>
-      }
+        </CardActionArea>
+      </Card>
+        )}):null}
+      </div>
+    }
+
+
+
+
+    const showQuestions =() =>{
+      return <div>
+      <h2>{Questionno+1 + " :- "+ Question}</h2>
+      {Questionno===0?showAdjectives():showPlayers()}
+      </div>
+    }
+
+
+
     function GameStartScreen(props) {
       return <div>
       <h1>StartGame</h1>
@@ -487,23 +598,15 @@ function GameRoom(props) {
       <h2>{name}</h2>
 
 
-      {Questionno!==-1?
-      <div>
-      <h2>{Questionno+1 + " :- "+ Question}</h2>
-      {Questionno===0?showAdjectives():showPlayers()}
-      </div>
-      : 
-      GameWaitingScreen()
-      }
+      {Questionno!==-1? showQuestions(): GameWaitingScreen()}
 
       </div>;
     }
+
     return (
       <div className="App">
         <header className="App-header">
-        {button?GameResult():isReady==='start'?GameStartScreen():GameReadyScreen()}
-      {/* {isready==='end'?GameResult():(isready==='start'?GameStartScreen():GameReadyScreen())} */}
-
+        {is_show_jahori_button_pressed?GameResult():isReady==='start'?GameStartScreen():GameReadyScreen()}
         </header>
       </div>
     );

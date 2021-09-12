@@ -544,7 +544,8 @@ function GameRoom(props) {
             <Typography variant="subtitle1" color="textSecondary">
               {data.sessionId}
             </Typography>
-            
+            {data.playerState==='done'?<div className={classes.square}>
+            </div>:null}
           </CardContent>
         </div>
         </CardActionArea>
@@ -603,7 +604,7 @@ function GameRoom(props) {
       enableTooltip: true,
       deterministic: false,
       fontFamily: "impact",
-      fontSizes: [5, 60],
+      fontSizes: [5, 10],
       fontStyle: "normal",
       fontWeight: "normal",
       padding: 1,

@@ -128,7 +128,7 @@ function GameRoom(props) {
 
       // final endpoint - ws://localhost:2567
       var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
-      if (window.location.port && window.location.port !== "80") { endpoint += ":" }
+      if (window.location.port && window.location.port !== "80") { endpoint += ":"  }
       
       console.log(endpoint);
       //connect to endpoint using client

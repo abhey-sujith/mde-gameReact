@@ -7,6 +7,7 @@ import { useDispatch } from 'react-redux';
 import {
     details
   } from '../app/slice/gameSlice';
+  import { Button } from '@material-ui/core';
 
 function Home(props) {
     const dispatch = useDispatch();
@@ -132,7 +133,7 @@ function Home(props) {
 
 
             <h1>Create Room</h1>
-            <button type="submit">Create</button>
+            <Button type="submit" className={{padding:5,background:'#00e5ff',color:'#252525'}} variant="contained" color="primary" > Submit </Button>
 
             <h1>Join</h1>
 
@@ -161,15 +162,16 @@ function Home(props) {
             }
             }}/>
 
-            <button type ='submit' onClick={onJoinButtonPressed}>Join</button>
+            <Button type="submit" className={{padding:5,background:'#00e5ff',color:'#252525'}} variant="contained" color="primary"  onClick={onJoinButtonPressed}> Join </Button>
 
             </form>
 
             {/* if room id is in localstorage then try to reconnect */}
             {/* TODO: change it to check based on time instead */}
             {roomIdlocalStorage?<form onSubmit={onReconnectPressed}>
-            <h1>{("Reconnect to Room " +roomIdlocalStorage +" as "+localStorageName + 'sid' + sessionidd)}</h1>
-            <button type="submit">Create</button>
+            <h1>{("Reconnect to Room " +roomIdlocalStorage +" as "+localStorageName)}</h1>
+            <Button type="submit" className={{padding:5,background:'#00e5ff',color:'#252525'}} variant="contained" color="primary"> Reconnect </Button>
+
             </form>:null}
      
         </div>

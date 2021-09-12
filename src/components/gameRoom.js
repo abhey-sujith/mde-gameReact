@@ -15,6 +15,7 @@ import CardMedia from '@material-ui/core/CardMedia';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import CardActionArea from '@material-ui/core/CardActionArea';
+import { Button } from '@material-ui/core';
 import ReactWordcloud from 'react-wordcloud';
 
 const useStyles = makeStyles((theme) => ({
@@ -32,12 +33,18 @@ const useStyles = makeStyles((theme) => ({
     height:"100px",
   },
   color: {
-    background:'red'
+    background:'#ff3d00'
+   },
+   color2: {
+    background:'#ff3d00'
    },
    green: {
     background:'green'
    },
-   square:{width:'100%',height:30, background:'green'}
+   square:{width:'100%',height:30, background:'green'},
+   buttonstyle:{marginTop:10,marginRight:10,padding:5,alignSelf:'flex-end'},
+   button:{padding:5,background:'#ffa000',color:'#252525'},
+   showresultbutton:{padding:5,background:'#c60055',color:'#ffffff'}
 }));
 
 function GameRoom(props) {
@@ -127,8 +134,12 @@ function GameRoom(props) {
     useEffect(()=>{ 
 
       // final endpoint - ws://localhost:2567
-      var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
-      if (window.location.port && window.location.port !== "80") { endpoint += ":"  }
+      var endpoint = window.location.protocol.replace("http", "ws") + "//" + "localhost";
+ 
+      // var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
+      // if (window.location.port && window.location.port !== "80") { endpoint += ":"  }
+
+      if (window.location.port && window.location.port !== "80") { endpoint += ":2567"  }
       
       console.log(endpoint);
       //connect to endpoint using client
@@ -241,6 +252,9 @@ function GameRoom(props) {
             alert('game has ended')
             history.replace('/')
           }
+          // if(player.isRoomCreator){
+          //   setRoomCreator(true)
+          // }
        });
 
 
@@ -454,7 +468,11 @@ function GameRoom(props) {
     // functiion to leave the room
     const leave = () => {
       if (room_instance.current) {
-        room_instance.current.connection.close();
+        if (window.confirm('Are you sure you want to leave?')) {
+          room_instance.current.leave();
+          history.replace('/');
+        } else {
+        }
 
       } else {
         console.warn("Not connected.");
@@ -489,7 +507,7 @@ function GameRoom(props) {
 
     const showPlayers =()=>{
       return <div>
-      <button onClick={onPlayerSubmitClicked}>submit</button>
+      <Button className={classes.button} variant="contained" color="primary" onClick={onPlayerSubmitClicked}> Submit </Button>
   
         {players.length?players.map((data)=>{
        return (
@@ -544,10 +562,11 @@ function GameRoom(props) {
             <Typography variant="subtitle1" color="textSecondary">
               {data.sessionId}
             </Typography>
-            {data.playerState==='done'?<div className={classes.square}>
-            </div>:null}
           </CardContent>
         </div>
+        {data.playerState==='done'?<div className={classes.square}>
+          <h3>Player finished</h3>
+        </div>:null}
         </CardActionArea>
       </Card>
         )}):null}
@@ -571,7 +590,7 @@ function GameRoom(props) {
       <h1>Game Screen Room</h1>
       <h2>{(room_instance?.current?.id?("Room id :- "+room_instance.current.id):null)}</h2>
       <h2>{name}</h2>
-      {isRoomCreator?  <button onClick={onReadyClicked}>Ready</button>:null}
+      {isRoomCreator?  <Button className={classes.button} variant="contained" color="primary" onClick={onReadyClicked}> Start Game </Button>:null}
       {showPlayersWithoutClick()}
     
     </div>
@@ -584,7 +603,7 @@ function GameRoom(props) {
 
     function GameWaitingScreen(props) {
     return <div>
-    {isRoomCreator? <button onClick={showResultToAll}>submit</button>:null}
+    {isRoomCreator? <Button className={classes.showresultbutton} variant="contained" color="primary" onClick={showResultToAll}> Show Result To All Players </Button>:null}
     <h2>Waiting for players to finish</h2>
     {showPlayersWithoutClick()}
     </div>
@@ -604,7 +623,7 @@ function GameRoom(props) {
       enableTooltip: true,
       deterministic: false,
       fontFamily: "impact",
-      fontSizes: [5, 10],
+      fontSizes: [40, 50],
       fontStyle: "normal",
       fontWeight: "normal",
       padding: 1,
@@ -677,11 +696,11 @@ function GameRoom(props) {
   
     const showAdjectives =()=>{
       return <div>
-      <button onClick={onPlayerAdjectivesSubmitClicked}>submit</button>
+      <Button className={classes.button} variant="contained" color="primary" onClick={onPlayerAdjectivesSubmitClicked}> Submit </Button>
   
         {adjective.length?adjective.map((data)=>{
         return (
-        <Card className={[classes.root,data.selected?classes.color:null,data.state==='done'?classes.green:null]} key={data.adjective} onClick={(e)=>{
+        <Card className={[classes.root,data.selected?classes.color2:null,data.state==='done'?classes.green:null]} key={data.adjective} onClick={(e)=>{
           setadjective(obj=>{
             // console.log('obj',obj);
             return obj.map(item => {
@@ -734,6 +753,7 @@ function GameRoom(props) {
     return (
       <div className="App">
         <header className="App-header">
+        <Button className={classes.buttonstyle} variant="contained" color="primary" onClick={leave}> Leave </Button>
         {is_show_jahori_button_pressed?GameResult():isReady==='start'?GameStartScreen():GameReadyScreen()}
         </header>
       </div>

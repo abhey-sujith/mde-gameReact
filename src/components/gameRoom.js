@@ -37,6 +37,7 @@ const useStyles = makeStyles((theme) => ({
    green: {
     background:'green'
    },
+   square:{width:'100%',height:30, background:'green'}
 }));
 
 function GameRoom(props) {
@@ -152,7 +153,7 @@ function GameRoom(props) {
         room_instance.current.state.players.onAdd = function (player, sessionId) {
           setplayers(prev => {
             // console.log('setter ,',map);
-            return [...prev,{sessionId:sessionId,name:player.playerName,selected:false}]
+            return [...prev,{sessionId:sessionId,name:player.playerName,selected:false,playerState:'idle'}]
           });
 
 
@@ -174,6 +175,20 @@ function GameRoom(props) {
             }else{
 
             }
+
+
+            if(player.playerState==="done"){
+              setplayers(obj=>{
+                // console.log('obj',obj);
+                return obj.map(item => {
+                  var temp = Object.assign({}, item);
+                  if (temp.sessionId === sessionId) {
+                      temp.playerState = "done";
+                  }
+                  return temp;   
+              })
+            })
+            }
           }
 
         }
@@ -192,7 +207,111 @@ function GameRoom(props) {
         //       setReady(state.ready)
         // 
         // });
-        room_instance.current.onMessage("readychange", (data) => setReady(data.value));
+        room_instance.current.onMessage("readychange", (data) => {
+          if(data.value==='endgame'){
+            setshow_jahori_button_pressed(true)
+          }else{
+            setReady(data.value)
+          }
+        });
+
+        room_instance.current.onMessage("status", (message) => console.log(message));
+        room_instance.current.onLeave(() => console.log("Bye, bye!"));
+
+          localStorage.setItem("roomId", room_instance.current.id);
+          localStorage.setItem("sessionId", room_instance.current.sessionId);
+          localStorage.setItem("name", name);
+      }
+
+      const reconnect = () => {
+
+        room_instance.current.onStateChange.once(function(state) {
+          console.log('---------------------------in',state.ready,state);
+          var arr =[];
+          setadjectiveArray([...state.Adjectives]);
+
+          [...state.Adjectives].forEach(element => {
+              arr.push({adjective:element,selected:false,count:0})
+          });
+          setadjective(arr)
+          if(state.ready==='start'){
+            setReady(state.ready)
+          }
+          if(state.ready==='endgame'){
+            alert('game has ended')
+            history.replace('/')
+          }
+       });
+
+
+        room_instance.current.state.players.onAdd = function (player, sessionId) {
+          setplayers(prev => {
+            // console.log('setter ,',map);
+            return [...prev,{sessionId:sessionId,name:player.playerName,selected:false,playerState:'idle'}]
+          });
+
+
+
+          player.onChange = function (changes) {
+            // console.log('changes-----------',changes);
+            if(room_instance.current.sessionId=== sessionId){
+            if(player.isRoomCreator){
+                setRoomCreator(true)
+              }
+
+              setQuestion(player.Question)
+              setQuestionno(player.Questionno)
+
+              if(player.choice_of_adj_player){
+                setplayersChoices(player.choice_of_adj_player)
+              }
+              setWhatOtherPeopleChoseForPlayer(player.choice_of_adj_otherplayers)
+            }else{
+
+            }
+
+
+            if(player.playerState==="done"){
+              setplayers(obj=>{
+                // console.log('obj',obj);
+                return obj.map(item => {
+                  var temp = Object.assign({}, item);
+                  if (temp.sessionId === sessionId) {
+                      temp.playerState = "done";
+                  }
+                  return temp;   
+              })
+            })
+            }
+          }
+
+        }
+        
+        room_instance.current.state.players.onRemove = function (player, sessionId) {
+
+          setplayers(prev => {
+            // console.log('setter ,',map);
+            const items = prev.filter(item => item.sessionId !== sessionId);
+            console.log(items);
+            return [...items]
+          });
+        }
+
+          room_instance.current.onStateChange(function(state) {
+            if(state.ready==='endgame'){
+              setshow_jahori_button_pressed(true)
+            }else{
+              setReady(state.ready)
+            }
+        
+        });
+        // room_instance.current.onMessage("readychange", (data) => {
+        //   if(data.value==='endgame'){
+        //     setshow_jahori_button_pressed(true)
+        //   }else{
+        //     setReady(data.value)
+        //   }
+        // });
 
         room_instance.current.onMessage("status", (message) => console.log(message));
         room_instance.current.onLeave(() => console.log("Bye, bye!"));
@@ -270,7 +389,7 @@ function GameRoom(props) {
           client.reconnect(roomId, sessionId).then(room => {
             room_instance.current = room;
             console.log(room);
-            onjoin();
+            reconnect();
             console.log("Reconnected successfully!");
 
         // listen to patches coming from the server
@@ -395,8 +514,12 @@ function GameRoom(props) {
             <Typography variant="subtitle1" color="textSecondary">
               {data.sessionId}
             </Typography>
+            <div className={{width:'100%',height:10, background:'green'}}>
+            </div>
           </CardContent>
         </div>
+        {data.playerState==='done'?<div className={classes.square}>
+        </div>:null}
         </CardActionArea>
       </Card>
         )}):null}
@@ -421,6 +544,7 @@ function GameRoom(props) {
             <Typography variant="subtitle1" color="textSecondary">
               {data.sessionId}
             </Typography>
+            
           </CardContent>
         </div>
         </CardActionArea>
@@ -452,11 +576,14 @@ function GameRoom(props) {
     </div>
     }
 
-
+    const showResultToAll = () =>{
+      room_instance.current.send("endgame", {value:'endgame'});
+      setshow_jahori_button_pressed(true)
+    }
 
     function GameWaitingScreen(props) {
     return <div>
-    {isRoomCreator? <button onClick={()=>setshow_jahori_button_pressed(true)}>submit</button>:null}
+    {isRoomCreator? <button onClick={showResultToAll}>submit</button>:null}
     <h2>Waiting for players to finish</h2>
     {showPlayersWithoutClick()}
     </div>

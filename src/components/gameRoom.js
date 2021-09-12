@@ -127,10 +127,10 @@ function GameRoom(props) {
     useEffect(()=>{ 
 
       // final endpoint - ws://localhost:2567
-      var endpoint = window.location.protocol.replace("http", "ws") + "//" + window.location.hostname;
-      if (window.location.port && window.location.port !== "80") { endpoint += ":3000" }
+      var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
+      if (window.location.port && window.location.port !== "80") { endpoint += ":" }
       
-      // console.log(endpoint);
+      console.log(endpoint);
       //connect to endpoint using client
       let client = new Colyseus.Client(endpoint);
 

@@ -134,12 +134,12 @@ function GameRoom(props) {
     useEffect(()=>{ 
 
       // final endpoint - ws://localhost:2567
-      var endpoint = window.location.protocol.replace("http", "ws") + "//" + "localhost";
+      // var endpoint = window.location.protocol.replace("http", "ws") + "//" + "localhost";
  
-      // var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
-      // if (window.location.port && window.location.port !== "80") { endpoint += ":"  }
+      var endpoint = window.location.protocol.replace("http", "ws") + "//" + "mde-server.herokuapp.com";
+      if (window.location.port && window.location.port !== "80") { endpoint += ":"  }
 
-      if (window.location.port && window.location.port !== "80") { endpoint += ":2567"  }
+      // if (window.location.port && window.location.port !== "80") { endpoint += ":2567"  }
       
       console.log(endpoint);
       //connect to endpoint using client
